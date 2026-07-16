@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>CFA Level 1 Tracker</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
+html,body{margin:0; padding:0;}
+
+:root{
+  --bg:#FAF7F1;
+  --surface:#FFFFFF;
+  --ink:#22293A;
+  --muted:#6B7280;
+  --line:#E4DFD3;
+  --accent:#B08D57;
+  --accent-soft:#F1E6CC;
+  --good:#4B7B5E;
+  --good-soft:#E4EDE6;
+  --warn:#C97A3A;
+  --warn-soft:#F5E7D8;
+  --bad:#B4533F;
+  --bad-soft:#F4E1DD;
+  --src-kaplan:#6E7F9E;
+  --src-cfa:#B08D57;
+  --src-ele:#7A9E7E;
+  --src-uworld:#A5715F;
+}
+
+*{box-sizing:border-box;}
+.cfa-root{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  padding:28px 20px 60px;
+  max-width:920px;
+  margin:0 auto;
+  min-height:100%;
+}
+.cfa-root h1,.cfa-root h2{ font-family:'Source Serif 4',Georgia,serif; margin:0; }
+.mono{ font-family:'JetBrains Mono',monospace; }
+
+.header{margin-bottom:24px;}
+.eyebrow{font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; font-weight:500;}
+.header h1{font-size:26px; font-weight:700; margin-bottom:16px;}
+
+.ruler-wrap{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:18px 20px;}
+.ruler-stats{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; flex-wrap:wrap; gap:8px;}
+.ruler-stats .big{font-size:26px; font-weight:700;}
+.ruler-stats .label{font-size:12px; color:var(--muted);}
+.ruler-track{position:relative; height:10px; background:var(--accent-soft); border-radius:6px; overflow:hidden;}
+.ruler-fill{position:absolute; left:0; top:0; height:100%; background:var(--accent); border-radius:6px; transition:width .4s ease;}
+
+.targets-toggle{font-size:11px; color:var(--muted); text-decoration:underline; cursor:pointer; margin-top:10px; display:inline-block;}
+.targets-panel{display:none; margin-top:12px; border-top:1px solid var(--line); padding-top:12px;}
+.targets-panel.open{display:block;}
+.target-row{display:flex; justify-content:space-between; align-items:center; padding:5px 0; font-size:13px; gap:10px;}
+.target-row input{width:70px; border:1px solid var(--line); border-radius:6px; padding:5px 7px; font-family:'JetBrains Mono',monospace; font-size:12px;}
+
+.section{margin-top:32px;}
+.section-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px; flex-wrap:wrap; gap:6px;}
+.section-head h2{font-size:19px; font-weight:600;}
+.section-sub{font-size:12px; color:var(--muted);}
+
+/* Quick log form */
+.log-form{
+  background:var(--surface); border:1px solid var(--line); border-radius:10px;
+  padding:16px; display:grid; grid-template-columns:1fr 1.3fr 1fr .9fr .9fr auto; gap:10px; align-items:end;
+}
+.log-form label{font-size:11px; color:var(--muted); display:block; margin-bottom:4px;}
+.log-form input, .log-form select{
+  width:100%; border:1px solid var(--line); border-radius:6px; padding:8px; font-size:13px;
+  font-family:'Inter',sans-serif; background:#fff; color:var(--ink);
+}
+.log-form input:focus, .log-form select:focus{outline:2px solid var(--accent); outline-offset:1px; border-color:var(--accent);}
+.add-btn{background:var(--ink); color:#fff; border:none; border-radius:6px; padding:9px 16px; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap;}
+.add-btn:hover{background:#3a4256;}
+@media (max-width:760px){ .log-form{grid-template-columns:1fr 1fr;} }
+
+/* Filters */
+.filter-bar{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;}
+.filter-bar select{
+  border:1px solid var(--line); border-radius:20px; padding:6px 14px; font-size:12px;
+  background:var(--surface); color:var(--ink); font-family:'Inter',sans-serif; cursor:pointer;
+}
+
+/* Stat cards */
+.stat-cards{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px;}
+.stat-card{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:14px 16px;}
+.stat-card .val{font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:600;}
+.stat-card .lab{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-top:2px;}
+@media (max-width:640px){ .stat-cards{grid-template-columns:1fr;} }
+
+/* Chart cards */
+.chart-card{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:16px 18px; margin-bottom:14px;}
+.chart-title{font-size:13px; font-weight:600; margin-bottom:12px;}
+.hbar-row{display:grid; grid-template-columns:150px 1fr 70px; align-items:center; gap:10px; padding:6px 0; font-size:13px;}
+.hbar-label{font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.hbar-track{height:16px; background:#EFEAE0; border-radius:4px; overflow:hidden; position:relative;}
+.hbar-fill{height:100%; border-radius:4px; transition:width .3s ease;}
+.hbar-meta{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); text-align:right;}
+.src-dot{display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px;}
+
+/* Log table */
+.log-table{background:var(--surface); border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+.log-row{display:grid; grid-template-columns:.9fr 1.4fr .9fr .7fr .7fr .8fr auto; padding:9px 16px; border-bottom:1px solid var(--line); align-items:center; gap:8px; font-size:12.5px;}
+.log-row.head{background:#F3EFE5; font-size:10.5px; text-transform:uppercase; color:var(--muted); font-weight:600; letter-spacing:.05em;}
+.log-row:last-child{border-bottom:none;}
+.acc-pill{font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:600; padding:3px 7px; border-radius:20px; text-align:center; width:fit-content;}
+.acc-good{background:var(--good-soft); color:var(--good);}
+.acc-warn{background:var(--warn-soft); color:var(--warn);}
+.acc-bad{background:var(--bad-soft); color:var(--bad);}
+.del-btn{background:none; border:none; color:var(--muted); cursor:pointer; font-size:15px; line-height:1; padding:2px 6px;}
+.del-btn:hover{color:var(--bad);}
+.empty{padding:24px 16px; text-align:center; color:var(--muted); font-size:13px;}
+@media (max-width:760px){
+  .log-row{grid-template-columns:1fr 1fr; row-gap:4px;}
+  .log-row.head{display:none;}
+  .log-row{padding:12px 16px; border-bottom:6px solid var(--bg);}
+}
+
+/* Mock section (unchanged style) */
+.mock-form{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:16px; display:grid; grid-template-columns:1fr 1fr 1fr 2fr auto; gap:10px; margin-bottom:16px; align-items:end;}
+.mock-form label{font-size:11px; color:var(--muted); display:block; margin-bottom:4px;}
+.mock-form input{width:100%; border:1px solid var(--line); border-radius:6px; padding:8px; font-size:13px; font-family:'Inter',sans-serif; background:#fff; color:var(--ink);}
+.mock-form input:focus{outline:2px solid var(--accent); outline-offset:1px; border-color:var(--accent);}
+@media (max-width:640px){ .mock-form{grid-template-columns:1fr 1fr;} .mock-form .full{grid-column:1/-1;} }
+.mock-table{background:var(--surface); border:1px solid var(--line); border-radius:10px; overflow:hidden;}
+.mock-row{display:grid; grid-template-columns:1fr .8fr .8fr 2fr auto; padding:10px 16px; border-bottom:1px solid var(--line); align-items:center; gap:8px; font-size:13px;}
+.mock-row.head{background:#F3EFE5; font-size:11px; text-transform:uppercase; color:var(--muted); font-weight:600; letter-spacing:.06em;}
+.mock-row:last-child{border-bottom:none;}
+.mock-score{font-family:'JetBrains Mono',monospace; font-weight:600;}
+.mock-note{color:var(--muted); font-size:12px;}
+
+.save-note{font-size:11px; color:var(--muted); text-align:right; margin-top:6px; min-height:14px;}
+
+/* iOS zooms in on focus if inputs are under 16px - keep all form fields at 16px */
+.unit-num, .log-form input, .log-form select, .mock-form input, .target-row input, .filter-bar select{
+  font-size:16px !important;
+}
+@media (max-width:640px){
+  .cfa-root{padding:20px 14px 50px;}
+  .log-form, .mock-form{grid-template-columns:1fr 1fr;}
+  .log-form .add-btn, .mock-form .add-btn{grid-column:1/-1; padding:12px; font-size:15px;}
+  .header h1{font-size:22px;}
+  .ruler-stats .big{font-size:22px;}
+}
+</style>
+</head>
+<body>
+
+<div class="cfa-root" id="app">
+  <div class="header">
+    <div class="eyebrow">CFA Level 1 &middot; Private Revision Ledger</div>
+    <h1>Your progress, in one place</h1>
+    <div class="ruler-wrap">
+      <div class="ruler-stats">
+        <div>
+          <div class="big mono" id="overallPct">0%</div>
+          <div class="label">of target questions attempted</div>
+        </div>
+        <div style="text-align:right">
+          <div class="big mono" id="overallAcc">&mdash;</div>
+          <div class="label">overall accuracy</div>
+        </div>
+      </div>
+      <div class="ruler-track"><div class="ruler-fill" id="rulerFill" style="width:0%"></div></div>
+      <span class="targets-toggle" id="targetsToggle">Adjust unit targets</span>
+      <div class="targets-panel" id="targetsPanel"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>Log a session</h2>
+      <span class="section-sub">One row per practice set</span>
+    </div>
+    <div class="log-form">
+      <div><label>Date</label><input type="date" id="logDate"></div>
+      <div><label>Unit</label><select id="logUnit"></select></div>
+      <div><label>Source</label><select id="logSource">
+        <option>Kaplan</option><option>CFA</option><option>ELE</option><option>UWorld</option>
+      </select></div>
+      <div><label>Questions</label><input type="number" id="logQuestions" min="0" placeholder="e.g. 30"></div>
+      <div><label>Correct</label><input type="number" id="logCorrect" min="0" placeholder="e.g. 22"></div>
+      <button class="add-btn" id="addLogBtn">+ Log</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>Visual tracker</h2>
+      <span class="section-sub">Filter to slice the numbers</span>
+    </div>
+    <div class="filter-bar">
+      <select id="filterUnit"><option value="all">All units</option></select>
+      <select id="filterSource">
+        <option value="all">All sources</option>
+        <option>Kaplan</option><option>CFA</option><option>ELE</option><option>UWorld</option>
+      </select>
+    </div>
+
+    <div class="stat-cards">
+      <div class="stat-card"><div class="val mono" id="statSessions">0</div><div class="lab">Sessions</div></div>
+      <div class="stat-card"><div class="val mono" id="statQuestions">0</div><div class="lab">Questions attempted</div></div>
+      <div class="stat-card"><div class="val mono" id="statAcc">&mdash;</div><div class="lab">Accuracy</div></div>
+    </div>
+
+    <div class="chart-card" id="unitChartCard">
+      <div class="chart-title">Accuracy &amp; volume by unit</div>
+      <div id="unitChart"></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">By source</div>
+      <div id="sourceChart"></div>
+    </div>
+
+    <div class="chart-card" id="trendCard" style="display:none">
+      <div class="chart-title">Accuracy trend</div>
+      <svg id="trendChart" viewBox="0 0 600 150" style="width:100%; height:auto; display:block;"></svg>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>Session log</h2>
+      <span class="section-sub" id="logCountNote"></span>
+    </div>
+    <div class="log-table">
+      <div class="log-row head"><div>Date</div><div>Unit</div><div>Source</div><div>Qs</div><div>Correct</div><div>Accuracy</div><div></div></div>
+      <div id="logRows"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>Mock exam log</h2>
+      <span class="section-sub">"All topics" full mocks</span>
+    </div>
+    <div class="mock-form">
+      <div><label>Date</label><input type="date" id="mockDate"></div>
+      <div><label>Score %</label><input type="number" id="mockScore" min="0" max="100" placeholder="e.g. 68"></div>
+      <div><label>Time (min)</label><input type="number" id="mockTime" min="0" placeholder="e.g. 135"></div>
+      <div class="full"><label>Notes</label><input type="text" id="mockNotes" placeholder="e.g. weak on FI, ran out of time"></div>
+      <button class="add-btn" id="addMockBtn">+ Add mock</button>
+    </div>
+    <div class="mock-table">
+      <div class="mock-row head"><div>Date</div><div>Score</div><div>Time</div><div>Notes</div><div></div></div>
+      <div id="mockRows"></div>
+    </div>
+    <div class="chart-card" id="mockChartWrap" style="display:none">
+      <div class="chart-title">Mock score trend</div>
+      <svg id="mockChart" viewBox="0 0 600 150" style="width:100%; height:auto; display:block;"></svg>
+    </div>
+  </div>
+
+  <div class="save-note" id="saveNote">&nbsp;</div>
+</div>
+
+<script>
+(function(){
+  const UNIT_DEFS = [
+    "Quantitative Methods","Economics","Financial Statement Analysis","Corporate Issuers",
+    "Equity Investments","Fixed Income","Derivatives","Alternative Investments",
+    "Portfolio Management","Ethical and Professional Standards","All Topics"
+  ];
+  const SOURCE_COLORS = {Kaplan:'var(--src-kaplan)', CFA:'var(--src-cfa)', ELE:'var(--src-ele)', UWorld:'var(--src-uworld)'};
+
+  let units = UNIT_DEFS.map((name,i)=>({id:'u'+i, name, target:100}));
+  let sessions = []; // {id, date, unitId, source, questions, correct}
+  let mocks = [];
+  let saveTimer = null;
+
+  const $ = id => document.getElementById(id);
+  const unitName = id => (units.find(u=>u.id===id)||{}).name || '—';
+
+  function accBandClass(acc){ return acc>=70?'acc-good':acc>=50?'acc-warn':'acc-bad'; }
+  function bandColor(acc){ return acc>=70?'var(--good)':acc>=50?'var(--warn)':'var(--bad)'; }
+  function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  function populateSelects(){
+    $('logUnit').innerHTML = units.map(u=>`<option value="${u.id}">${u.name}</option>`).join('');
+    $('filterUnit').innerHTML = '<option value="all">All units</option>' + units.map(u=>`<option value="${u.id}">${u.name}</option>`).join('');
+  }
+
+  function currentFilters(){
+    return { unit: $('filterUnit').value, source: $('filterSource').value };
+  }
+
+  function filteredSessions(){
+    const f = currentFilters();
+    return sessions.filter(s => (f.unit==='all'||s.unitId===f.unit) && (f.source==='all'||s.source===f.source));
+  }
+
+  function render(){
+    renderRuler();
+    renderTargetsPanel();
+    renderDashboard();
+    renderLogTable();
+    renderMocks();
+  }
+
+  function renderRuler(){
+    const totalTarget = units.reduce((s,u)=>s+Number(u.target||0),0);
+    const totalAttempted = sessions.reduce((s,x)=>s+Number(x.questions||0),0);
+    const totalCorrect = sessions.reduce((s,x)=>s+Number(x.correct||0),0);
+    const overallPct = totalTarget>0 ? Math.min(100, totalAttempted/totalTarget*100) : 0;
+    const overallAcc = totalAttempted>0 ? (totalCorrect/totalAttempted*100) : null;
+    $('overallPct').textContent = overallPct.toFixed(0)+'%';
+    $('overallAcc').textContent = overallAcc===null ? '—' : overallAcc.toFixed(0)+'%';
+    $('rulerFill').style.width = overallPct+'%';
+  }
+
+  function renderTargetsPanel(){
+    $('targetsPanel').innerHTML = units.map(u=>`
+      <div class="target-row">
+        <span>${u.name}</span>
+        <input type="number" min="0" class="mono" data-unit="${u.id}" value="${u.target}">
+      </div>`).join('');
+    $('targetsPanel').querySelectorAll('input').forEach(inp=>{
+      inp.addEventListener('change', e=>{
+        const u = units.find(x=>x.id===e.target.dataset.unit);
+        if(u){ u.target = Math.max(0, Number(e.target.value)||0); renderRuler(); renderDashboard(); scheduleSave(); }
+      });
+    });
+  }
+
+  function renderDashboard(){
+    const fs = filteredSessions();
+    const f = currentFilters();
+
+    // stat cards
+    const totalQ = fs.reduce((s,x)=>s+Number(x.questions||0),0);
+    const totalC = fs.reduce((s,x)=>s+Number(x.correct||0),0);
+    $('statSessions').textContent = fs.length;
+    $('statQuestions').textContent = totalQ;
+    $('statAcc').textContent = totalQ>0 ? (totalC/totalQ*100).toFixed(0)+'%' : '—';
+
+    // unit chart (hide if a specific unit is selected — nothing to compare)
+    if(f.unit==='all'){
+      $('unitChartCard').style.display = 'block';
+      const rows = units.map(u=>{
+        const us = fs.filter(s=>s.unitId===u.id);
+        const q = us.reduce((s,x)=>s+Number(x.questions||0),0);
+        const c = us.reduce((s,x)=>s+Number(x.correct||0),0);
+        const acc = q>0 ? c/q*100 : 0;
+        return {label:u.name, q, acc};
+      });
+      const maxQ = Math.max(1, ...rows.map(r=>r.q));
+      $('unitChart').innerHTML = rows.map(r=>`
+        <div class="hbar-row">
+          <div class="hbar-label">${r.label}</div>
+          <div class="hbar-track"><div class="hbar-fill" style="width:${r.q>0?(r.q/maxQ*100):0}%; background:${r.q>0?bandColor(r.acc):'#EFEAE0'}"></div></div>
+          <div class="hbar-meta">${r.q>0 ? r.acc.toFixed(0)+'% · '+r.q : '—'}</div>
+        </div>`).join('');
+    } else {
+      $('unitChartCard').style.display = 'none';
+    }
+
+    // source chart (respects unit filter, ignores source filter so you can see the split)
+    const unitFiltered = sessions.filter(s => f.unit==='all' || s.unitId===f.unit);
+    const sourceRows = Object.keys(SOURCE_COLORS).map(src=>{
+      const ss = unitFiltered.filter(s=>s.source===src);
+      const q = ss.reduce((s,x)=>s+Number(x.questions||0),0);
+      const c = ss.reduce((s,x)=>s+Number(x.correct||0),0);
+      const acc = q>0 ? c/q*100 : 0;
+      return {label:src, q, acc, color:SOURCE_COLORS[src]};
+    });
+    const maxSQ = Math.max(1, ...sourceRows.map(r=>r.q));
+    $('sourceChart').innerHTML = sourceRows.map(r=>`
+      <div class="hbar-row">
+        <div class="hbar-label"><span class="src-dot" style="background:${r.color}"></span>${r.label}</div>
+        <div class="hbar-track"><div class="hbar-fill" style="width:${r.q>0?(r.q/maxSQ*100):0}%; background:${r.color}"></div></div>
+        <div class="hbar-meta">${r.q>0 ? r.acc.toFixed(0)+'% · '+r.q : '—'}</div>
+      </div>`).join('');
+
+    // trend chart
+    const chrono = [...fs].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    if(chrono.length>=2){
+      $('trendCard').style.display='block';
+      drawLineChart('trendChart', chrono.map(s=> s.questions>0 ? s.correct/s.questions*100 : 0));
+    } else {
+      $('trendCard').style.display='none';
+    }
+  }
+
+  function drawLineChart(svgId, values){
+    const svg = $(svgId);
+    const w=600,h=150,pad=30;
+    const xs = values.map((_,i)=> pad + i*((w-2*pad)/Math.max(1,values.length-1)));
+    const ys = values.map(v=> h-pad - (Math.max(0,Math.min(100,v))/100)*(h-2*pad));
+    let path = xs.map((x,i)=> (i===0?'M':'L')+x.toFixed(1)+','+ys[i].toFixed(1)).join(' ');
+    const grid = [0,25,50,75,100].map(v=>{
+      const y = h-pad-(v/100)*(h-2*pad);
+      return `<line x1="${pad}" y1="${y}" x2="${w-pad}" y2="${y}" stroke="#E4DFD3" stroke-width="1"/>
+              <text x="4" y="${y+4}" font-size="9" fill="#6B7280" font-family="JetBrains Mono, monospace">${v}</text>`;
+    }).join('');
+    const dots = xs.map((x,i)=> `<circle cx="${x}" cy="${ys[i]}" r="3.5" fill="#B08D57"/>`).join('');
+    svg.innerHTML = grid + `<path d="${path}" fill="none" stroke="#B08D57" stroke-width="2"/>` + dots;
+  }
+
+  function renderLogTable(){
+    const fs = [...filteredSessions()].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    $('logCountNote').textContent = fs.length + ' entr' + (fs.length===1?'y':'ies') + ' shown';
+    const el = $('logRows');
+    if(fs.length===0){
+      el.innerHTML = '<div class="empty">No sessions match the current filters.</div>';
+      return;
+    }
+    el.innerHTML = fs.map(s=>{
+      const acc = s.questions>0 ? (s.correct/s.questions*100) : 0;
+      return `
+      <div class="log-row" data-id="${s.id}">
+        <div class="mono">${s.date||'—'}</div>
+        <div>${escapeHtml(unitName(s.unitId))}</div>
+        <div><span class="src-dot" style="background:${SOURCE_COLORS[s.source]||'#999'}"></span>${escapeHtml(s.source)}</div>
+        <div class="mono">${s.questions}</div>
+        <div class="mono">${s.correct}</div>
+        <div><span class="acc-pill ${accBandClass(acc)}">${acc.toFixed(0)}%</span></div>
+        <div><button class="del-btn" data-id="${s.id}">✕</button></div>
+      </div>`;
+    }).join('');
+    el.querySelectorAll('.del-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        sessions = sessions.filter(s=>s.id!==btn.dataset.id);
+        render();
+        scheduleSave();
+      });
+    });
+  }
+
+  function renderMocks(){
+    const el = $('mockRows');
+    if(mocks.length===0){
+      el.innerHTML = '<div class="empty">No mocks logged yet — add your first above.</div>';
+      $('mockChartWrap').style.display = 'none';
+      return;
+    }
+    const sorted = [...mocks].sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+    el.innerHTML = sorted.map(m=>`
+      <div class="mock-row" data-id="${m.id}">
+        <div class="mono">${m.date||'—'}</div>
+        <div class="mock-score">${m.score}%</div>
+        <div class="mono">${m.time?m.time+'m':'—'}</div>
+        <div class="mock-note">${escapeHtml(m.notes||'')}</div>
+        <div><button class="del-btn" data-id="${m.id}">✕</button></div>
+      </div>
+    `).join('');
+    el.querySelectorAll('.del-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        mocks = mocks.filter(m=>m.id!==btn.dataset.id);
+        renderMocks();
+        scheduleSave();
+      });
+    });
+    if(mocks.length>=2){
+      $('mockChartWrap').style.display='block';
+      const chrono = [...sorted].reverse();
+      drawLineChart('mockChart', chrono.map(m=>m.score));
+    } else {
+      $('mockChartWrap').style.display='none';
+    }
+  }
+
+  // Events
+  $('targetsToggle').addEventListener('click', ()=>{
+    $('targetsPanel').classList.toggle('open');
+  });
+
+  $('addLogBtn').addEventListener('click', ()=>{
+    const date = $('logDate').value || new Date().toISOString().slice(0,10);
+    const unitId = $('logUnit').value;
+    const source = $('logSource').value;
+    const questions = Number($('logQuestions').value);
+    const correct = Number($('logCorrect').value);
+    if(!$('logQuestions').value || !$('logCorrect').value){ $('logQuestions').focus(); return; }
+    if(correct>questions){ alert('Correct can\'t exceed questions attempted.'); return; }
+    sessions.push({id:'s'+Date.now(), date, unitId, source, questions, correct});
+    $('logQuestions').value=''; $('logCorrect').value='';
+    render();
+    scheduleSave();
+  });
+
+  $('addMockBtn').addEventListener('click', ()=>{
+    const date = $('mockDate').value || new Date().toISOString().slice(0,10);
+    const score = Number($('mockScore').value);
+    const time = Number($('mockTime').value)||0;
+    const notes = $('mockNotes').value.trim();
+    if(!$('mockScore').value){ $('mockScore').focus(); return; }
+    mocks.push({id:'m'+Date.now(), date, score, time, notes});
+    $('mockDate').value=''; $('mockScore').value=''; $('mockTime').value=''; $('mockNotes').value='';
+    renderMocks();
+    scheduleSave();
+  });
+
+  $('filterUnit').addEventListener('change', ()=>{ renderDashboard(); renderLogTable(); });
+  $('filterSource').addEventListener('change', ()=>{ renderDashboard(); renderLogTable(); });
+
+  async function storageGet(key){
+    if(window.storage){
+      try{ const r = await window.storage.get(key, false); return r ? r.value : null; }catch(e){ return null; }
+    }
+    try{ return localStorage.getItem(key); }catch(e){ return null; }
+  }
+  async function storageSet(key, value){
+    if(window.storage){
+      try{ return await window.storage.set(key, value, false); }catch(e){ return null; }
+    }
+    try{ localStorage.setItem(key, value); return true; }catch(e){ return null; }
+  }
+
+  function scheduleSave(){
+    $('saveNote').textContent = 'Saving…';
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveData, 500);
+  }
+
+  async function saveData(){
+    try{
+      await storageSet('cfa-l1-units-v2', JSON.stringify(units));
+      await storageSet('cfa-l1-sessions-v2', JSON.stringify(sessions));
+      await storageSet('cfa-l1-mocks', JSON.stringify(mocks));
+      $('saveNote').textContent = 'Saved just now';
+      setTimeout(()=>{ if($('saveNote').textContent==='Saved just now') $('saveNote').textContent='\u00A0'; }, 2000);
+    }catch(err){
+      $('saveNote').textContent = 'Save failed — will retry on next edit';
+      console.error('Storage error', err);
+    }
+  }
+
+  async function loadData(){
+    try{ const u = await storageGet('cfa-l1-units-v2'); if(u) units = JSON.parse(u); }catch(e){}
+    if(!units.some(u=>u.name==='All Topics')){ units.push({id:'u_alltopics', name:'All Topics', target:100}); }
+    try{ const s = await storageGet('cfa-l1-sessions-v2'); if(s) sessions = JSON.parse(s); }catch(e){}
+    try{ const m = await storageGet('cfa-l1-mocks'); if(m) mocks = JSON.parse(m); }catch(e){}
+    populateSelects();
+    render();
+  }
+
+  loadData();
+})();
+</script>
+</body>
+</html>
